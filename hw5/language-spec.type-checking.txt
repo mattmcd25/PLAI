@@ -1,0 +1,126 @@
+CS 4536 Hw5: Type Checking
+
+Language Specification
+======================
+
+In this assignment, you will work with a typed language that includes
+numbers, booleans, conditionals, functions, and lists of numbers. The
+concrete syntax for the language is given by the following BNF
+grammars:
+
+   <expr> ::= <num>
+            | tru
+            | fls
+            | (+ <expr> <expr>)
+            | (- <expr> <expr>)
+            | (* <expr> <expr>)
+            | (iszero <expr>)
+            | (bif <expr> <expr> <expr>)
+
+            | <id>
+
+            | (with ((<id> <expr>)) <expr>)
+            | (rec  ((<id> <expr>)) <expr>) 
+            | (fun (<id> : <type>) : <type> <expr>)
+            | (<expr> <expr>)
+
+            | nempty
+            | (ncons <expr> <expr>)
+            | (nempty? <expr>)
+            | (nfirst <expr>)
+            | (nrest <expr>)
+
+   <type> ::= number
+            | boolean
+            | nlist
+            | (<type> -> <type>)
+  
+The with construct in this language takes only a single binding. We
+have retained the extra set of parentheses around this binding in case
+you want to reuse some test expressions from earlier assignments. The
+parser will, however, throw an error if you introduce more than one
+binding in a single with statement.  In the surface syntax for types,
+base types are represented by symbols, and the arrow type by a list of
+three elements: the type of the argument, the symbol ->, and the type
+of the result. This surface syntax gets used when writing lambda
+expressions. Here is an example of annotating a function that consumes
+a number and returns a function:
+
+     (fun (x : number) : (number -> number)
+       (fun (y : number) : number
+         (+ x y)))
+  
+The language for this assignment has some constructs that you have not
+implemented this term. However, all should be familiar to you from
+your prior programming experience:
+
+- iszero consumes a number, and returns true if it is 0, false
+  otherwise
+
+- the test expression of bif ("boolean if") must evaluate to true or
+  false
+
+- ncons consumes a number and a numeric list, and produces a numeric
+  list.  The other list-like operators consume a numeric list and
+  perform the corresponding operation (first, rest, etc).
+
+- the construct rec defines recursive functions. The right hand side
+of the rec binding must be, syntactically, a "fun" expression. In
+other words, the following expression is legal:
+
+  (rec ((f (fun (n : number) : nlist
+           (f (- n 1))))))
+    
+while the following are not legal:
+
+     (rec ((f (with ((y 4)) 
+               (lambda (x) (f y))))) 
+       ...)
+     (rec ((f f))
+       ...)
+
+     (rec ((f (+ 1 f)))
+       ...)
+
+You may assume that all of our test cases will respect this 
+assumption.
+
+
+Typing
+=======
+
+Here is a specification of the typing rules for the core fragment of
+this language: identifiers, numbers, addition, application, and
+functions.  As described in class the rules comprise the correctness
+condition for your type-checker.  I leave it to you to formalize the
+appropriate rules for the other language constructs.
+
+
+ TypeEnv = listof (symbol, type)
+
+ type-of : Expr x TypeEnv -> Type
+
+                    Inference Rules 
+                    %%%%%%%%%%%%%%% 
+
+n is a number
+ -------------------------
+ type-of n te = number
+
+ x is an identifier
+ ---------------------
+ type-of x te = te(x)     
+
+ type-of e1 te = number
+ type-of e2 te = number  
+ -----------------------------
+ type-of (+ e1 e2) te = number
+
+ type-of f te = T1 -> T2
+ type-of arg te = T1 
+ -----------------------------
+ type-of (f arg) te = T2
+
+ type-of bdy te[x : T1]              = T2
+ ----------------------------------------------
+ type-of (fun (x : t1) : T2 bdy ) te = T1 -> T2

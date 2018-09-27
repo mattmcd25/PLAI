@@ -1,0 +1,88 @@
+;; unify :  (listof Constraint) -> (listof Substitution)
+;; unifies the list of constraints into a set of 'solved' substitutions 
+(define (unify [clist : (listof Constraint)]) : (listof Substitution)
+  (unifyloop clist empty))
+
+;; unifyloop :  (listof Constraint) x (listof Substitution) -> (listof Substitution)
+;; repeatedly 'solves' constraints until only substitutions are left
+(define (unifyloop [clist : (listof Constraint)] [slist : (listof Substitution)]) : (listof Substitution)
+  ;(begin (display slist)
+  (cond [(empty? clist) slist]
+        [(cons? clist) (type-case Constraint (first clist)
+                         [ceq (left right) (unify2 left right clist slist)])]));)
+
+;; unify2 : ConstraintTerm x ConstraintTerm x (listof Constraint) x (listof Substitution) -> (listof Substituions)
+;; takes a Constraint, broken down to left and right, and 'solves' it (& recalls unifyloop with the result)
+(define (unify2 left right clist slist) 
+  (let ([this (ceq left right)])
+    (if (term-eq? left right) 
+        (unifyloop (rest clist) slist)
+        (type-case Constraint-Term left
+          [typeconstant (name) (type-case Constraint-Term right
+                                 [typeconstant (name) (error 'unify2 "type error: contract violation")]
+                                 [else (error 'unify2-constant-else "unplanned case")])]
+          [typevar-subexp (expr) (type-case Constraint-Term right
+                                   [typeconstant (name) (unifyloop (sub-t-in-c left right (rest clist))
+                                                                   (cons (subs left right) 
+                                                                         (sub-t-in-s left right slist)))]
+                                   [constructor (type terms) (unifyloop (sub-t-in-c left right (rest clist))
+                                                                        (cons (subs left right)
+                                                                              (sub-t-in-s left right slist)))]
+                                   [typevar-generated (name) (unifyloop (rest clist)
+                                                                        (cons (subs left right) slist))]
+                                   [else (begin (display this)
+                                                (error 'unify2-subexp-else "unplanned case"))])]
+          [typevar-generated (name) (if (a-in-t? left right)
+                                        (error 'unify2 "type error: variable appears in its definition")
+                                        (unifyloop (rest clist)
+                                                   (cons (subs left right)
+                                                         (sub-t-in-s left right slist))))]
+          [constructor (type terms) (type-case Constraint-Term right
+                                      [typeconstant (name) (error 'unify2 "type error: construcor equated to constant")]
+                                      [constructor (type terms) (if (and (symbol=? (constructor-type left)
+                                                                                   (constructor-type right))
+                                                                         (= (length (constructor-terms left))
+                                                                            (length (constructor-terms right))))
+                                                                    (unifyloop (append (zip ceq (constructor-terms left) (constructor-terms right))
+                                                                                       (rest clist))
+                                                                               slist)
+                                                                    (error 'unify2 "type error: differing constructors"))]
+                                      [else (error 'unify2-constr-else "unplanned case")])]))))
+
+;; zip : ('a x 'b -> 'c) x (listof 'a) x (listof 'b) -> (listof 'c)
+;; zips two lists (of equal length!) together with the specified function
+(define (zip f ts us)
+  (if (empty? ts) empty      
+      (cons (f (first ts) (first us)) 
+            (zip f (rest ts) (rest us)))))
+
+;; a-in-t? : Constraint-Term x Constraint-Term -> boolean
+;; checks if the typevar 'a appears in t
+(define (a-in-t? a t)
+  (type-case Constraint-Term t
+    [typeconstant (name) false]
+    [typevar-subexp (expr) false]
+    [typevar-generated (name) (and (typevar-generated? a)
+                                   (symbol=? (typevar-generated-name a) name))]
+    [constructor (type terms) (ormap (lambda (t) (a-in-t? a t)) terms)]))
+
+;; sub-t-in-s : Constraint-Term x Constraint-Term x (listof Substitution) -> (listof Substitution)
+;; performs the substitution of t in for a in the list of substitutions
+(define (sub-t-in-s a t slist)
+  (map (lambda (x) (type-case Substitution x
+                     [subs (l r) (subs (sub-t-in-ct a t l)
+                                       (sub-t-in-ct a t r))])) slist))
+
+;; sub-t-in-c : Constraint-Term x Contraint-Term x (listof Constraint) -> (listof Constraint)
+;; performs the substitution of t in for a in the list of constraints
+(define (sub-t-in-c a t clist)
+  (map (lambda (x) (type-case Constraint x
+                     [ceq (l r) (ceq (sub-t-in-ct a t l)
+                                     (sub-t-in-ct a t r))])) clist))
+
+;; sub-t-in-a2 : Constraint-Term x Constraint-Term x Constraint-Term -> Constraint-Term
+;; performs the substitution of t in for a in one constraint term
+(define (sub-t-in-ct a t r)
+  (type-case Constraint-Term r
+    [constructor (type terms) (constructor type (map (lambda (x) (sub-t-in-ct a t x)) terms))]
+    [else (if (term-eq? a r) t r)]))

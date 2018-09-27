@@ -1,0 +1,35 @@
+The language for homework 3
+============================
+
+The homework language adds mutation, both explicit (boxes) and 
+implicit ( "set" on variables). 
+
+The homework language is based on the language in Chapter 8 of the
+text, with the addition of allowing:
+
+In the core syntax:
+
+(i) a list of arguments to "fun" expressions, not just a single
+argument.  Empty lists are ok!
+
+And in the sugared syntax, we allow:
+
+(ii)  a list of bindings in "with" expressions
+
+and
+
+(iii) a list of expressions in "seq" expressions.  Empty lists here
+  are NOT ok.
+
+Since we have mutation, we have to specify a few things
+
+- In an application, evaluate the function first, then the arguments.
+(The arguments are all evaluated in the same environment, but NOT
+necessarily in the same store.)
+
+- Evaluate the arguments to a function in left-to-right order.
+
+- The set and setbox operators return the value that has been assigned
+  to the variable or box contents (i.e., both (set x 5) and (setbox b
+  5) should return (numV 5)).
+

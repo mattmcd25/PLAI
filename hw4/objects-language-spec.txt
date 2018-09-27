@@ -1,0 +1,122 @@
+The language for homework 4
+============================
+
+The homework language adds classes and objects to the language we
+implemented for homework 3.  But for simplicity, we OMIT boxes.
+
+Syntax
+------
+
+The precise syntax of the core language and of the sugared language
+are implicit in the data definitions and the parsers in the starter
+file.  The highlights are
+
+1) We add a "new" construct for creating objects from classes 
+
+The form of a "new" expression is
+    (new id <Expr> ...)
+    
+where the id should be the name of a class and the Exprs are the
+arguments to the class constructor (more on that below).  The dots
+means that the previous term can appear 0 or more times.
+
+2) We add a "send" construct for sending messages to objects 
+ 
+The form of a "send" expression is
+     (send <Expr> message <Expr> ...)
+
+Here the first expression must evaluate to an object, the message
+should be a syntactic symbol (not an expression) corresponding to a
+method defined in that object, and the remaining Exprs are the
+arguments to the method.
+
+Here is a little grammar for classes.
+
+Class ::= (class id (id ...)
+                   (parent id  <Expr> ...)
+                   (private (id <Expr> ...) ...) 
+                   (public (id <Expr> ...) ...)
+                   (id (fun (id ...) <Expr>))
+                   ...)
+  
+An example will illustrate the parts of the class grammar:
+         (class Adder (w)
+                (parent Object)
+                (private)
+                (public (v 6) (q 5))
+                (add (fun (x) (+ x w)))
+                (subpub (fun () (- w v))))
+
+         (class Subber (y)
+                (parent Adder (+ y 1))
+                (private)
+                (public)
+                (sub (fun (x) (- x y)))))
+   
+A class starts with a name and a sequence of constructor
+variables. The parent statement names a class or uses the symbol
+Object to indicate that the class does not extend any other
+user-defined class (ala Java). The expressions that follow the name of
+the parent class compute the arguments to the parent constructor (if
+any).
+
+Each of private and public introduce variables and their initial
+values (note that you don't need an extra set of parens around the
+var-value pairs as you do in with). Each line following public defines
+a method with the given name and fun definition. You can have as many
+methods as you like.
+
+Note that our current parser is fragile: you must specify the parts of
+the grammar in order, and you can't omit any parts. For example, if
+you don't want any private variables, you still need to include
+(private) so the parser will accept your program. The only exception
+to this is that a class is not required to have any methods.
+
+There is a new construct in ExprC designed to support case statements
+like we saw in the object lecture in class. The construct is called
+varcaseC: it takes a symbol on which to branch into cases, a set of
+options, and an expression to use as an else clause. Each option has a
+name (symbol) and a corresponding ExprC. For example:
+
+    (varcaseC 'msg
+              (list (optC 'add1 (fun (x) (+ x 1)))
+                    (optC 'sub1 (fun (x) (- x 1))))
+              (numC 0))
+  
+could be used to extract one of the funs based on the value bound to
+msg, returning (numC 0) if message was not one of 'add1 or 'sub1.
+
+Semantics
+---------
+
+The constructor, private, and public variables of a class are bound in
+all methods directly within that class. No identifier name should be
+used twice across these three specifications in the same class.
+
+Public variables are accessible to sub-classes and outside
+computations through getters and setters. Implementations of this
+language create a getter and setter automatically for each public
+variable. For example, starting from the two sample class definitions
+above, the following program would be valid (and would return (numV
+7)):
+
+         (with ((myobj (new Adder 5)))
+           (seq (send myobj set-v 7)
+                (send myobj get-v)))
+   
+Private variables are visible only directly within that class. They
+are not visible in subclasses of the class. Subclasses must use the
+getters and setters of the parent to access the parent's public
+variables. For example, if the parent contained a public variable
+called x, a subclass could reference it through:
+
+     (send parent get-x)
+   
+This call would need to be inside a method in the subclass.  The
+initialization expressions for each public/private variable are
+evaluated with-style, and may not refer to one another's values. The
+initialization expressions may, however, send messages to the parent
+object as part of computing initial values.
+
+This constructors in the language do not execute any computation other
+than passing initial values to the class' constructor variables.

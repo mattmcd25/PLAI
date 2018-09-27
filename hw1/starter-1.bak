@@ -1,0 +1,136 @@
+#lang plai-typed
+
+;; Starter code for CS 4536 hw 1
+;; Dan Dougherty, adapted from code by Kathi Fisler
+;; Jan 2018
+;;
+;; Some test cases are given.  Add some of your own!
+
+;; ---------------------------------------------------------
+
+;; This is convenient during program development:
+;; " (undefined) " can be used as a place-holder for any expression,
+;; for example something you want to postpone writing as you work on
+;; other things.
+;;
+;; Don't forget the parens when using it...
+(define (undefined) (error 'undefined "") )
+
+;; ---------------------------------------------------------
+
+; Produces the sum of the numbers in the list
+(define (sum [L : (listof number)]) : number
+  (undefined))
+
+;; (test (sum empty) 0)
+;; (test (sum (list -3 3)) 0)
+;; (test (sum (list 1 2 3)) 6)
+
+;; ---------------------------------------------------------
+
+; Produces the sum of the negative numbers in the list
+(define (sum-negative [L : (listof number)]) : number
+ (undefined))
+
+;; (test (sum-negative (list 1 3 5 7)) 0)
+;; (test (sum-negative (list -3 -4 0)) -7)
+
+;; ---------------------------------------------------------
+
+; Produces list with same elts as input list, except negative
+;  numbers have been replaced with 0
+(define (raise [L : (listof number)]) : (listof number)
+  (undefined))
+  
+;; (test (raise (list 69 -10 54)) (list 69 0 54))
+
+;; ---------------------------------------------------------
+  
+; alternating : list[A] -> list[A]
+; Produces list of every other element from the input list
+(define (alternating L)
+  (undefined))
+  
+;; (test (alternating (list 1 2 3 4)) (list 1 3))
+;; (test (alternating (list "hi" "there" "mom")) (list "hi" "mom"))
+
+;; ---------------------------------------------------------
+
+; the datatypes
+
+;;(define-type Scores ... )
+ 
+;; (define-type Student  ...)
+
+;; (define std1 (undergrad "Amy" (scores 90 83 "") 2015))
+;; (define std2 (graduate "Phil" (scores 70 50 "") "PhD"))
+;; (define std3 (graduate "Xin" (scores 80 85 "") "MS"))
+;; (define std4 (undergrad "Gompei" (scores 50 40 "") 1900))
+
+;; (define std1g (undergrad "Amy" (scores 90 83 "high pass") 2015))
+;; (define std2g (graduate "Phil" (scores 70 50 "fail") "PhD"))
+;; (define std3g (graduate "Xin" (scores 80 85 "pass") "MS"))
+;; (define std4g (undergrad "Gompei" (scores 50 40 "fail") 1900))
+
+;; ---------------------------------------------------------
+;; assign-grades
+
+; Produce a score with the course grade computed from midterm and final grades
+;;(define (compute-grade [s : Scores]) : Scores
+;;  (undefined))
+
+; Augment each student in input list with a course grade
+;;(define (assign-grades [studL : (listof Student)]) : (listof Student)
+;;  (undefined))
+
+;; (test (assign-grades (list std1 std2 std3 std4))
+;;       (list std1g std2g std3g std4g))
+
+;; ---------------------------------------------------------
+  
+; determine whether all phd students have passing course grades
+;;(define (all-phd-pass? [studL : (listof Student)]) : boolean
+;;  (undefined))
+
+;; (test (all-phd-pass? (list std1g std3g)) true)
+;; (test (all-phd-pass? (list std1g std2g std3g)) false)
+
+;; ---------------------------------------------------------
+;; rainfall
+
+  
+;; produce average of non-negative numbers that appear before -999 in a list
+(define (rainfall [L : (listof number)]) : number
+  (undefined))
+
+;; (test (rainfall (list 5 3 1)) 3)
+;; (test (rainfall (list -4 -2 -999)) -1)
+
+;; ---------------------------------------------------------
+;; shopping cart
+
+;;(define-type CartItem ..)
+
+
+; determine the total price of a list of items
+;; (define (cart-total [itemL : (listof CartItem)]) : number
+
+
+; produce total price of cart items, taking into account shoe and hat discounts
+;; (define (checkout [itemL : (listof CartItem)]) : number
+;;   (undefined))
+
+; check both discounts apply
+;; (test (checkout (list (item "apple" 25) (item "bag" 50)
+;;                       (item "toothpaste" 85) (item "cheese" 15)))
+;;       175)
+
+; check shoes discount
+;; (test (checkout (list (item "shoes" 25) (item "bag" 50)
+;;                       (item "shoes" 85) (item "hat" 15)))
+;;       153)
+
+; check hat discount
+;; (test (checkout (list (item "hat" 25) (item "bag" 50)
+;;                       (item "shoes" 85) (item "hat" 15)))
+;;       165)

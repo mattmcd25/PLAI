@@ -1,0 +1,121 @@
+CS 4536 Hw5: Type Inference
+
+Language Specification
+======================
+
+This assignment handles the following language:
+
+
+   <expr> ::= <num>
+            | tru
+            | fls
+            | (+ <expr> <expr>)
+            | (- <expr> <expr>)
+            | (* <expr> <expr>)
+            | (iszero <expr>)
+            | (bif <expr> <expr> <expr>)
+
+            | <id>
+
+            | (with ((<id> <expr>)) <expr>)
+            | (rec  ((<id> <expr>)) <expr>)
+            | (fun (<id>) <expr>)
+            | (<expr> <expr>)
+
+            | tempty
+            | (tcons <expr> <expr>)
+            | (tempty? <expr>)
+            | (tfirst <expr>)
+            | (trest <expr>)
+   
+This starter file contains the define-types for expressions and types,
+as well as the parser.
+
+The novelty of this language is that the list operations are now
+polymorphic; that is, you can create lists of arbitrary data (numbers,
+booleans, etc).
+
+The with construct in this language takes only a single binding. We
+have retained the extra set of parentheses around this binding in case
+you want to reuse some test expressions from earlier assignments. The
+parser will, however, throw an error if you introduce more than one
+binding in a single with statement.
+
+This language contains a construct rec for defining recursive
+functions. The right hand side of the rec binding must
+be, syntactically, a "fun" expression. In other words,
+the following expression is legal:
+
+     (rec ((f (fun (x) (f x))))
+       ...)
+
+
+    
+while the following are not legal:
+
+     (rec ((f (with ((y 4)) 
+               (lambda (x) (f y))))) 
+       ...)
+     (rec ((f f))
+       ...)
+
+     (rec ((f (+ 1 f)))
+       ...)
+    
+You may assume that all of our test cases will respect this 
+assumption.
+
+
+Typing
+=======
+
+Here is a specification of the typing rules for the core fragment of
+this language: identifiers, numbers, addition, application, and
+functions.  As described in class the rules comprise the correctness
+condition for type inference.  I leave it to you to formalize the
+appropriate rules for the other language constructs.
+
+Key Point: These rules look almost the same as the ones for
+type-checking (except for the absence of type annotation on the
+expressions).  The KEY DIFFERENCE between type inference and
+type-checking is that in type inference the rules cannot be slavishly
+followed to make an algorithm.
+
+In particular, in type-inference you are NOT GIVEN the type
+environment as you are in type-checking.  Rather, you have to find the
+type-environment at the same time that you find the typing!  This is
+what generating and solving the constraints do for you.
+
+But it is still true that the typing rules (below) are the correctness
+condition for type-inference, just as the corresponding typing rules
+are the correcteness condition for type-checking.
+
+ TypeEnv = listof (symbol, type)
+
+ type-of : Expr x TypeEnv -> Type
+
+                    Inference Rules 
+                    %%%%%%%%%%%%%%% 
+
+
+ n is a number
+ -------------------------
+ type-of n te = number
+
+ x is an identifier
+ ---------------------
+ type-of x te = te(x)     
+
+ type-of e1 te = number
+ type-of e2 te = number  
+ -----------------------------
+ type-of (+ e1 e2) te = number
+
+ type-of f te = T1 -> T2
+ type-of arg te = T1 
+ -----------------------------
+ type-of (f arg) te = T2
+
+ type-of bdy te[x : T1]              = T2
+ ----------------------------------------------
+ type-of (fun (x) bdy ) te = T1 -> T2
